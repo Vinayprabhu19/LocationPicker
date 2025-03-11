@@ -1,0 +1,7 @@
+{
+    "outDir": "./out/controls",
+    "controlId": "LocationPicker",
+    "build": {
+        "solution": "unmanaged"
+    }
+}

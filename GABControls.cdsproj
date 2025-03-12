@@ -1,34 +1,52 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
   <PropertyGroup>
     <PowerAppsTargetsPath>$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\PowerApps</PowerAppsTargetsPath>
+    <!-- Limit parallelism to reduce memory consumption -->
+    <MaxCpuCount>1</MaxCpuCount> 
+    <!-- Enable incremental build to avoid rebuilding unchanged components -->
+    <BuildInParallel>false</BuildInParallel>
+    <DisableFastUpToDateCheck>false</DisableFastUpToDateCheck>
+
   </PropertyGroup>
 
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" />
   <Import Project="$(PowerAppsTargetsPath)\Microsoft.PowerApps.VisualStudio.Solution.props" Condition="Exists('$(PowerAppsTargetsPath)\Microsoft.PowerApps.VisualStudio.Solution.props')" />
 
   <PropertyGroup>
-    <ProjectGuid>1a0446d1-3d03-489e-aebc-fe4eb71a103a</ProjectGuid>
+    <ProjectGuid>c074a14b-3127-498f-ad0a-728fd40cf7a4</ProjectGuid>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <!--Remove TargetFramework when this is available in 16.1-->
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
     <SolutionRootPath>src</SolutionRootPath>
   </PropertyGroup>
 
-  <!-- 
-    Solution Packager overrides, un-comment to use: SolutionPackagerType (Managed, Unmanaged, Both)
-    Solution Localization Control, if you want to enabled localization of your solution, un-comment SolutionPackageEnableLocalization and set the value to true. - Requires use of -loc flag on Solution Clone or Sync
-  -->
-  <!--
   <PropertyGroup>
-    <SolutionPackageType>Managed</SolutionPackageType>
-    <SolutionPackageEnableLocalization>false</SolutionPackageEnableLocalization>
+    <SolutionPackageType>Both</SolutionPackageType>
   </PropertyGroup>
-  -->
+
+  <PropertyGroup>
+    <SolutionFileNamePrefix>msdyn_GABControls</SolutionFileNamePrefix>
+    <ApplicationFolder>$(WSRoot)\solutions</ApplicationFolder>
+    <SolutionFolder>$(ApplicationFolder)\GABControls</SolutionFolder>
+    <SolutionXML>$(ApplicationFolder)\GABControls\src\Other\Solution.xml</SolutionXML>
+    <MakeCab>true</MakeCab>
+    <PackageNuspec>$(WSRoot)\build\config\package.nuspec</PackageNuspec>
+    <UseBaseVersion>false</UseBaseVersion>
+    <UsePackageVersion>true</UsePackageVersion> 
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <SolutionPackageType>Both</SolutionPackageType>
+    <SolutionPackageLogFilePath>$(ApplicationFolder)\$(SolutionFileNamePrefix)_packager.log</SolutionPackageLogFilePath>
+    <SolutionPackageZipFilePath>$(SolutionOutputPath)\$(SolutionFileNamePrefix).zip</SolutionPackageZipFilePath>
+    <SolutionPackageEnableLocalization>$(EnableLocalization)</SolutionPackageEnableLocalization>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.PowerApps.MSBuild.Solution" Version="1.*" />
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0" PrivateAssets="All" />
+    <PackageReference Include="Dynamics.Solutions.Tools.Targets.SolutionPackager" Version="2.0.36" />
   </ItemGroup>
 
   <ItemGroup>
@@ -41,15 +59,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)\**" Exclude="@(ExcludeDirectories)" />
-    <Content Include="$(SolutionPackageZipFilePath)">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <Content Include="$(MSBuildThisFileDirectory)\**" Exclude="@(ExcludeDirectories)">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="LocationPicker\LocationPicker.pcfproj" />
+    <ProjectReference Include="LocationPicker\LocationPicker.pcfproj" />   
   </ItemGroup>
+
+  <Target Name="GenerateCabAfterBuild" AfterTargets="Build">
+    <Exec Command="makecab.exe $(SolutionPackageZipFilePath) $(SolutionOutputPath)\$(SolutionFileNamePrefix).cab" Condition=" '$(MakeCab)' == 'true' " />
+  </Target>
 
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
   <Import Project="$(PowerAppsTargetsPath)\Microsoft.PowerApps.VisualStudio.Solution.targets" Condition="Exists('$(PowerAppsTargetsPath)\Microsoft.PowerApps.VisualStudio.Solution.targets')" />
